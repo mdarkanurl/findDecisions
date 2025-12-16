@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UsePipes } from '@nestjs/common';
 import { DecisionsService } from './decisions.service';
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
-import { createDecisionsSchema } from "../schemas/decision.schema";
+import { createDecisionsSchema } from "./dto/create-decision.dto";
 import { decisions, Prisma } from '../../generated/prisma/client';
 import z from 'zod';
 

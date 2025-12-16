@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { decisions, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from './../prisma/prisma.service';
-import { createDecisionsSchema } from '../schemas/decision.schema';
+import { createDecisionsSchema } from './dto/create-decision.dto';
 import z from 'zod';
 
 @Injectable()
