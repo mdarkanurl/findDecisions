@@ -25,4 +25,9 @@ export class DecisionsController {
   ): Promise<decisions | null> {
     return this.decisionsService.getDecisionsById(id);
   }
+
+  @Get()
+  getAllDecisions(): Promise<decisions[] | null> {
+    return this.decisionsService.getAllDecisions();
+  }
 }
