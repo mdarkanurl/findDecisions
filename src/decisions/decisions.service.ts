@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { decisions, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from './../prisma/prisma.service';
-import { createDecisionsSchema } from './dto/create-decision.dto';
-import z from 'zod';
+import { CreateDecisionDto } from './dto/create-decision.dto';
+import { getDecisionsByIdDto } from './dto/get-decisions-by-id.dto';
 
 @Injectable()
 export class DecisionsService {
   constructor (private prisma: PrismaService) {};
 
   createDecisions(
-    data: z.infer<typeof createDecisionsSchema>
+    data: CreateDecisionDto
   ): Promise<decisions | null> {
     return this.prisma.decisions.create({
       data: {
@@ -23,6 +23,16 @@ export class DecisionsService {
         actorId: data.actorId === undefined || data.actorId === null
           ? null
           : data.actorId,
+      }
+    });
+  }
+
+  getDecisionsById(
+    id: getDecisionsByIdDto
+  ): Promise<decisions | null> {
+    return this.prisma.decisions.findUnique({
+      where: {
+        id
       }
     });
   }
