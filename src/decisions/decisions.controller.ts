@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Session, UseGuards, UsePipes } from '@nestjs/common';
 import { DecisionsService } from './decisions.service';
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { CreateDecisionDto, createDecisionsSchema } from "./dto/create-decision.dto";
 import { decisions } from '../../generated/prisma/client';
-import z from 'zod';
 import { getDecisionsByIdDto, getDecisionsByIdSchema } from './dto/get-decisions-by-id.dto';
+// import { AuthGuard, UserSession } from '@thallesp/nestjs-better-auth';
 
 @Controller({ path: 'decisions', version: '1' })
 export class DecisionsController {
@@ -30,4 +30,10 @@ export class DecisionsController {
   getAllDecisions(): Promise<decisions[] | null> {
     return this.decisionsService.getAllDecisions();
   }
+
+  // @UseGuards(AuthGuard)
+  //   @Get('me')
+  //   me(@Session() session: UserSession) {
+  //     return { user: session.user };
+  //   }
 }

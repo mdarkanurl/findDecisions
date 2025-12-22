@@ -40,4 +40,10 @@ export class DecisionsService {
   getAllDecisions(): Promise<decisions[] | null> {
     return this.prisma.decisions.findMany();
   }
+
+  getDecisionsByEntities(
+    data: null
+  ) {
+    
+  }
 }
