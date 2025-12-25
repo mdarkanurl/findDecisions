@@ -1,53 +1,26 @@
-import { Controller, Post, Body, Req, Res, Headers, Get } from "@nestjs/common";
+import { Controller, Post, Body, Req, Res, Headers, Get, HttpStatus, HttpCode } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response, Request } from "express";
+import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
+import { CreateUserDto } from "./dto/create.signUpEmail.dto";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private prisma: PrismaService
+  ) {}
 
-  @Post("signup")
-  async signup(
-    @Body() body: { name: string, email: string; password: string },
-    @Res() res: Response,
-  ) {
-    console.log("Is it reach here!");
-    const response = await this.authService.signUp(body.name, body.email, body.password);
-
-    // Better Auth may return cookies in the HTTP response — so you need
-    // to forward them correctly in NestJS
-    response.headers.forEach((value, key) => {
-      res.setHeader(key, value);
-    });
-
-    res.status(response.status).send(response.body);
-  }
-
-  @Post("login")
-  async login(
-    @Body() body: { email: string; password: string },
-    @Res() res: Response,
-  ) {
-    const response = await this.authService.signIn(body.email, body.password);
+  @Post('signup')
+  @AllowAnonymous()
+  async signup(@Body() body: CreateUserDto, @Res() res: Response) {
+    const response = await this.authService.signUp(body);
 
     response.headers.forEach((value, key) => {
       res.setHeader(key, value);
     });
 
     res.status(response.status).send(response.body);
-  }
-
-  @Post("logout")
-  async logout(@Req() req: Request, @Res() res: Response) {
-    const sessionToken = req.cookies["session"];
-    await this.authService.signOut({ sessionToken });
-    res.clearCookie("session");
-    return res.json({ success: true });
-  }
-
-  @Get("me")
-  async me(@Headers() headers: any) {
-    const session = await this.authService.getSession(headers);
-    return session;
   }
 }

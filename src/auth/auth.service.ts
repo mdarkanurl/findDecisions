@@ -1,35 +1,26 @@
 // auth/auth.service.ts
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { auth } from "../lib/auth";
+import { CreateUserDto } from "./dto/create.signUpEmail.dto";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class AuthService {
-  async signUp(name: string, email: string, password: string) {
+  constructor(private prisma: PrismaService) {}
+  async signUp(body: CreateUserDto) {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: body.email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User already exists');
+    }
+
     const response = await auth.api.signUpEmail({
-      body: { name, email, password },
+      body,
       asResponse: true,
     });
+
     return response;
-  }
-
-  async signIn(email: string, password: string) {
-    const response = await auth.api.signInEmail({
-      body: { email, password },
-      asResponse: true,
-    });
-    return response;
-  }
-
-  async signOut(tokens: { sessionToken: string }) {
-    await auth.api.signOut({
-      headers: { Authorization: `Bearer ${tokens.sessionToken}` },
-      asResponse: true,
-    });
-  }
-
-
-  async getSession(headers: Headers) {
-    const session = await auth.api.getSession({ headers });
-    return session;
   }
 }
