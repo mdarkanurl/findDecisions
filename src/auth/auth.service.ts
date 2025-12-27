@@ -16,11 +16,9 @@ export class AuthService {
       throw new ConflictException('User already exists');
     }
 
-    const response = await auth.api.signUpEmail({
+    return await auth.api.signUpEmail({
       body,
       asResponse: true,
     });
-
-    return response;
   }
 }

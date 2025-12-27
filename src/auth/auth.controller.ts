@@ -3,13 +3,11 @@ import { AuthService } from "./auth.service";
 import { Response, Request } from "express";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
-import { PrismaService } from "../prisma/prisma.service";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
-    private authService: AuthService,
-    private prisma: PrismaService
+    private authService: AuthService
   ) {}
 
   @Post('signup')
@@ -17,12 +15,11 @@ export class AuthController {
   async signup(@Body() body: CreateUserDto, @Res() res: Response) {
     const response = await this.authService.signUp(body);
 
-    response.headers.forEach((value, key) => {
-      res.setHeader(key, value);
+    res.status(HttpStatus.CREATED).json({
+      success: true,
+      message: "User created",
+      data: null,
+      error: null
     });
-
-    res.status(response.status).send(response.body);
   }
-
-  @Post('')
 }
