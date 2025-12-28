@@ -29,7 +29,6 @@ const rabbitmq = async () => {
 };
 
 const sendEmailQueue = async (data: sendEmailDto) => {
-    await rabbitmq();
     const channel = await conn.createChannel();
     const payload = JSON.stringify(data);
     channel.sendToQueue(queue, Buffer.from(payload, "utf-8"));

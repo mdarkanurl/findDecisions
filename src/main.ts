@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { rabbitmq } from './utils/rabbitmq';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -27,6 +28,8 @@ async function bootstrap() {
 
   await app.listen(port);
   console.log(`Server is running on http://localhost:${port}`);
+  await rabbitmq();
+  console.log("Rabbitmq is connected");
 }
 
 bootstrap();
