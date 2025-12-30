@@ -3,6 +3,8 @@ import { BadRequestException, ConflictException, Injectable, UnauthorizedExcepti
 import { auth } from "../lib/auth";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { PrismaService } from "../prisma/prisma.service";
+import { loginSchemaDto } from "./dto/create.login.dto";
+import { verifyEmailDto } from "./dto/create.email-verification.dto";
 
 @Injectable()
 export class AuthService {
@@ -22,10 +24,10 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(token: string) {
+  async verifyEmail(token: verifyEmailDto) {
     try {
       const result = await auth.api.verifyEmail({
-        query: { token },
+        query: token
       });
 
       return result;

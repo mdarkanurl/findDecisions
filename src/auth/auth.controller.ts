@@ -1,8 +1,11 @@
-import { Controller, Post, Body, Req, Res, Headers, Get, HttpStatus, HttpCode, Query, BadRequestException } from "@nestjs/common";
+import { Controller, Post, Body, Req, Res, Headers, Get, HttpStatus, HttpCode, Query, BadRequestException, UsePipes } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
-import { CreateUserDto } from "./dto/create.signUpEmail.dto";
+import { CreateUserDto, createUserSchema } from "./dto/create.signUpEmail.dto";
+import { loginSchema, loginSchemaDto } from "./dto/create.login.dto";
+import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
+import { verifyEmailDto, verifyEmailSchema } from "./dto/create.email-verification.dto";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -12,6 +15,7 @@ export class AuthController {
 
   @Post('signup')
   @AllowAnonymous()
+  @UsePipes(new ZodValidationPipe(createUserSchema))
   async signup(@Body() body: CreateUserDto, @Res() res: Response) {
     await this.authService.signUp(body);
 
@@ -25,12 +29,9 @@ export class AuthController {
 
   @Get('verify-email')
   @AllowAnonymous()
+  @UsePipes(new ZodValidationPipe(verifyEmailSchema))
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Query('token') token: string) {
-    if (!token) {
-      throw new BadRequestException('Verification token is required');
-    }
-
+  async verifyEmail(@Query('token') token: verifyEmailDto) {
     try {
       await this.authService.verifyEmail(token);
 
