@@ -5,6 +5,7 @@ import 'dotenv/config';
 import { sendEmailQueue } from '../utils/rabbitmq';
 
 const Prisma = new PrismaService();
+const API_VERSION_FOR_EMAIL_VERIFICATION = process.env.API_VERSION_FOR_EMAIL_VERIFICATION;
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL!,
@@ -18,10 +19,14 @@ export const auth = betterAuth({
   },
   emailVerification: {
     async sendVerificationEmail({ user, url }) {
+      const fixedUrl = url.replace(
+        "/api/auth/verify-email",
+        `/api/${API_VERSION_FOR_EMAIL_VERIFICATION}/auth/verify-email`
+      );
       await sendEmailQueue({
         email: user.email,
         subject: 'Verify your email address',
-        body: `Click the link to verify your email: ${url}`,
+        body: `Click the link to verify your email: ${fixedUrl}`,
       });
     },
     autoSignInAfterVerification: true,
