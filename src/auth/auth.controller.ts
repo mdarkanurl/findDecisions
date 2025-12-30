@@ -24,6 +24,7 @@ export class AuthController {
   }
 
   @Get('verify-email')
+  @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
   async verifyEmail(@Query('token') token: string) {
     if (!token) {
