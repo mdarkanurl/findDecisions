@@ -50,4 +50,16 @@ export class AuthController {
       );
     }
   }
+
+  @Post('login')
+  @AllowAnonymous()
+  @UsePipes(new ZodValidationPipe(loginSchema))
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() body: loginSchemaDto) {
+    try {
+      await this.authService.login(body);
+    } catch (error) {
+      
+    }
+  }
 }

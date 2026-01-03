@@ -35,4 +35,12 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired verification token');
     }
   }
+
+  async login(body: loginSchemaDto) {
+    const res = await auth.api.signInEmail({
+      body
+    });
+
+    console.log(res);
+  }
 }
