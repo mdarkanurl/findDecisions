@@ -17,7 +17,7 @@ import config from './config';
     PrismaModule,
     DecisionsModule,
     LocalAuthModule,
-    AuthModule.forRoot(auth),
+    AuthModule.forRoot({ auth }),
   ],
   controllers: [],
   providers: [],
