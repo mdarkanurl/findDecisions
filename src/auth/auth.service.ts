@@ -7,14 +7,12 @@ import {
 } from "@nestjs/common";
 import { auth } from "../lib/auth";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
-import { PrismaService } from "../prisma/prisma.service";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
-import { APIError } from "better-auth/api";
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor() {}
   async signUp(body: CreateUserDto) {
     try {
       const user = await auth.api.signUpEmail({
@@ -32,12 +30,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      if(error instanceof APIError) {
-        const status = 
-          typeof error.status === 'number'? error.status : 500;
-        throw new HttpException(error.message, status);
-      }
-      throw new HttpException(`${error}`, 500);
+      throw error;
     }
   }
 
@@ -58,23 +51,38 @@ export class AuthService {
         throw new HttpException('Server error', 500);
       }
 
-      const setCookieHeader = result.headers.get('set-cookie');
-      return setCookieHeader;
+      const cookie = result.headers.get('set-cookie');
+      return cookie;
     } catch (error) {
-      if (error instanceof APIError) {
-        const status =
-          typeof error.status === 'number' ? error.status : 500;
-        throw new HttpException(error.message, status);
-      }
-      throw new HttpException(`${error}`, 500);
+      throw error;
     }
   }
 
-  async login(body: loginSchemaDto) {
-    const res = await auth.api.signInEmail({
-      body
-    });
+  async login(
+    body: loginSchemaDto,
+    req: Request
+  ) {
+    try {
+      const res = await auth.api.signInEmail({
+        body,
+        asResponse: true,
+        headers: req.headers as any
+      });
 
-    console.log(res);
+      if(res.status === 401) {
+        throw new BadRequestException(
+          "User not found or invalid password"
+        );
+      }
+
+      if(res.status === 403) {
+        throw new HttpException("Email not verifyed", res.status)
+      }
+
+      const cookie = res.headers.get('set-cookie');
+      return cookie;
+    } catch (error) {
+      throw error;
+    }
   }
 }

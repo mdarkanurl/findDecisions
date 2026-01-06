@@ -9,7 +9,6 @@ import {
   HttpCode,
   Query,
   UsePipes,
-  Session,
   HttpException,
   InternalServerErrorException
 } from "@nestjs/common";
@@ -29,12 +28,13 @@ export class AuthController {
 
   @Post('signup')
   @AllowAnonymous()
+  @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(createUserSchema))
   async signup(@Body() body: CreateUserDto, @Res() res: Response) {
     try {
       await this.authService.signUp(body);
 
-      res.status(HttpStatus.CREATED).json({
+      res.json({
         success: true,
         message: "User created",
         data: null,
@@ -58,13 +58,13 @@ export class AuthController {
     @Res() res: Response,
   ) {
     try {
-      const setCookieHeader = await this.authService.verifyEmail(token, req);
+      const data = await this.authService.verifyEmail(token, req);
 
-      if (setCookieHeader) {
-        res.setHeader('Set-Cookie', setCookieHeader);
+      if (data) {
+        res.setHeader('Set-Cookie', data);
       }
 
-      res.status(HttpStatus.CREATED).json({
+      res.json({
         success: true,
         message: "Email verified successfully",
         data: null,
@@ -78,16 +78,34 @@ export class AuthController {
     }
   }
 
-
   @Post('login')
   @AllowAnonymous()
+  @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
   @HttpCode(HttpStatus.OK)
-  async login(@Body() body: loginSchemaDto) {
+  async login(
+    @Body() body: loginSchemaDto,
+    @Res() res: Response,
+    @Req() req: Request
+  ) {
     try {
-      await this.authService.login(body);
+      const data = await this.authService.login(body, req);
+
+      if (data) {
+        res.setHeader('Set-Cookie', data);
+      }
+
+      res.json({
+        success: true,
+        message: "You've logged in successfully",
+        data: null,
+        error: null
+      });
     } catch (error) {
-      
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Email verification failed");
     }
   }
 }
