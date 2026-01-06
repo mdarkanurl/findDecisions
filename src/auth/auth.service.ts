@@ -1,10 +1,16 @@
 // auth/auth.service.ts
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  Injectable
+} from "@nestjs/common";
 import { auth } from "../lib/auth";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
+import { APIError } from "better-auth/api";
 
 @Injectable()
 export class AuthService {
@@ -24,15 +30,32 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(token: verifyEmailDto) {
+  async verifyEmail(
+    token: verifyEmailDto,
+    req: Request
+  ) {
     try {
       const result = await auth.api.verifyEmail({
-        query: token
+        query: token,
+        asResponse: true,
+        headers: req.headers as any
       });
 
-      return result;
+      if(result.status === 401) {
+        throw new BadRequestException('token expired or invalid');
+      } else if(result.status >= 500) {
+        throw new HttpException('Server error', 500);
+      }
+
+      const setCookieHeader = result.headers.get('set-cookie');
+      return setCookieHeader;
     } catch (error) {
-      throw new BadRequestException('Invalid or expired verification token');
+      if (error instanceof APIError) {
+        const status =
+          typeof error.status === 'number' ? error.status : 500;
+        throw new HttpException(error.message, status);
+      }
+      throw new HttpException(`${error}`, 500);
     }
   }
 

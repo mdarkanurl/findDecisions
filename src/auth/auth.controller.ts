@@ -1,4 +1,18 @@
-import { Controller, Post, Body, Req, Res, Headers, Get, HttpStatus, HttpCode, Query, BadRequestException, UsePipes } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  Res,
+  Get,
+  HttpStatus,
+  HttpCode,
+  Query,
+  UsePipes,
+  Session,
+  HttpException,
+  InternalServerErrorException
+} from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { Response } from "express";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
@@ -29,27 +43,34 @@ export class AuthController {
 
   @Get('verify-email')
   @AllowAnonymous()
-  @UsePipes(new ZodValidationPipe(verifyEmailSchema))
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Query('token') token: verifyEmailDto) {
+  @UsePipes(new ZodValidationPipe(verifyEmailSchema))
+  async verifyEmail(
+    @Query() token: verifyEmailDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     try {
-      await this.authService.verifyEmail(token);
+      const setCookieHeader = await this.authService.verifyEmail(token, req);
 
-      return {
-        success: true,
-        message: 'Email verified successfully',
-        data: null,
-      };
-    } catch (error) {
-      if (error instanceof BadRequestException) {
-        throw error;
+      if (setCookieHeader) {
+        res.setHeader('Set-Cookie', setCookieHeader);
       }
 
-      throw new BadRequestException(
-        error instanceof Error ? error.message : 'Email verification failed',
-      );
+      res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: "Email verified successfully",
+        data: null,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Email verification failed' );
     }
   }
+
 
   @Post('login')
   @AllowAnonymous()
