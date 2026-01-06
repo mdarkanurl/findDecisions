@@ -31,6 +31,7 @@ export const auth = betterAuth({
     },
     autoSignInAfterVerification: true,
     sendOnSignUp: true,
+    expiresIn: 300
   },
   trustedOrigins: ['http://localhost:3000'],
 });
