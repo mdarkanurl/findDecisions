@@ -16,18 +16,29 @@ import { APIError } from "better-auth/api";
 export class AuthService {
   constructor(private prisma: PrismaService) {}
   async signUp(body: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: body.email },
-    });
+    try {
+      const user = await auth.api.signUpEmail({
+        body,
+        asResponse: true,
+      });
 
-    if (existingUser) {
-      throw new ConflictException('User already exists');
+      if(user.status === 422) {
+        throw new ConflictException('User already exists');
+      }
+
+      if(user.status === 400) {
+        throw new BadRequestException('Password is too short');
+      }
+
+      return user;
+    } catch (error) {
+      if(error instanceof APIError) {
+        const status = 
+          typeof error.status === 'number'? error.status : 500;
+        throw new HttpException(error.message, status);
+      }
+      throw new HttpException(`${error}`, 500);
     }
-
-    return await auth.api.signUpEmail({
-      body,
-      asResponse: true,
-    });
   }
 
   async verifyEmail(

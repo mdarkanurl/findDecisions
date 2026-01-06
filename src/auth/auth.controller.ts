@@ -31,14 +31,21 @@ export class AuthController {
   @AllowAnonymous()
   @UsePipes(new ZodValidationPipe(createUserSchema))
   async signup(@Body() body: CreateUserDto, @Res() res: Response) {
-    await this.authService.signUp(body);
+    try {
+      await this.authService.signUp(body);
 
-    res.status(HttpStatus.CREATED).json({
-      success: true,
-      message: "User created",
-      data: null,
-      error: null
-    });
+      res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: "User created",
+        data: null,
+        error: null
+      });
+    } catch (error) {
+      if(error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Fail to create user");
+    }
   }
 
   @Get('verify-email')
@@ -67,7 +74,7 @@ export class AuthController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException('Email verification failed' );
+      throw new InternalServerErrorException("Email verification failed");
     }
   }
 
