@@ -82,7 +82,6 @@ export class AuthController {
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
-  @HttpCode(HttpStatus.OK)
   async login(
     @Body() body: loginSchemaDto,
     @Res() res: Response,
@@ -106,6 +105,20 @@ export class AuthController {
         throw error;
       }
       throw new InternalServerErrorException("Email verification failed");
+    }
+  }
+
+  @Post('resend-verify-email')
+  @AllowAnonymous()
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(loginSchema))
+  async resendVerifyEmail(
+    
+  ) {
+    try {
+      
+    } catch (error) {
+      
     }
   }
 }
