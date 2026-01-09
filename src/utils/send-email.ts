@@ -18,7 +18,7 @@ export const sendEmail = async (user: {
   });
 
   if (error) {
-    return console.error({ error });
+    return console.error(`Error from Resend: ${{ error }}`);
   }
 
   console.log({ data });
