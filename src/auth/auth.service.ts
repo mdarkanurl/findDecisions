@@ -10,6 +10,7 @@ import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
 import { resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 import { PrismaService } from "../prisma/prisma.service";
+import { redis } from "../redis";
 
 @Injectable()
 export class AuthService {
@@ -101,6 +102,11 @@ export class AuthService {
         throw new BadRequestException(
           "Account already verified or account doesn't exist"
         );
+      }
+
+      const dataFromRedis = await redis.get(`sendVerificationEmail:${user.id}`);
+      if(dataFromRedis) {
+        throw new BadRequestException("Previous token is not expired");
       }
 
       return await auth.api.sendVerificationEmail({
