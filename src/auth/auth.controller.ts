@@ -19,6 +19,7 @@ import { CreateUserDto, createUserSchema } from "./dto/create.signUpEmail.dto";
 import { loginSchema, loginSchemaDto } from "./dto/create.login.dto";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { verifyEmailDto, verifyEmailSchema } from "./dto/create.email-verification.dto";
+import { resendVerifyEmailSchema, resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -111,14 +112,17 @@ export class AuthController {
   @Post('resend-verify-email')
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
-  @UsePipes(new ZodValidationPipe(loginSchema))
+  @UsePipes(new ZodValidationPipe(resendVerifyEmailSchema))
   async resendVerifyEmail(
-    
+    @Body() body: resendVerifyEmailSchemaDto
   ) {
     try {
-      
+      return await this.authService.resendVerifyEmail(body);
     } catch (error) {
-      
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Email verification failed");
     }
   }
 }

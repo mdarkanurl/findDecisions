@@ -9,10 +9,12 @@ import { auth } from "../lib/auth";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
+import { resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
+import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class AuthService {
-  constructor() {}
+  constructor(private prisma: PrismaService) {}
   async signUp(body: CreateUserDto) {
     try {
       const user = await auth.api.signUpEmail({
@@ -81,6 +83,33 @@ export class AuthService {
 
       const cookie = res.headers.get('set-cookie');
       return cookie;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async resendVerifyEmail(data: resendVerifyEmailSchemaDto) {
+    try {
+      // Check User Existence and Verification Status
+      const user = await this.prisma.user.findUnique({
+        where: {
+          email: data.email,
+          emailVerified: false
+        }
+      });
+
+      if(!user) {
+        throw new BadRequestException(
+          "Account already verified or account doesn't exist"
+        );
+      }
+
+      return await auth.api.sendVerificationEmail({
+        body: {
+          email: data.email,
+          callbackURL: "/"
+        }
+      });
     } catch (error) {
       throw error;
     }
