@@ -114,10 +114,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(resendVerifyEmailSchema))
   async resendVerifyEmail(
-    @Body() body: resendVerifyEmailSchemaDto
+    @Body() body: resendVerifyEmailSchemaDto,
+    @Res() res: Response
   ) {
     try {
-      return await this.authService.resendVerifyEmail(body);
+      await this.authService.resendVerifyEmail(body);
+
+      res.json({
+        success: true,
+        message: "The email has been sent",
+        data: null,
+        error: null
+      });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -125,4 +133,15 @@ export class AuthController {
       throw new InternalServerErrorException("Email verification failed");
     }
   }
+
+  @Get('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout() {
+    try {
+      return await this.authService.logout();
+    } catch (error) {
+      
+    }
+  }
+
 }

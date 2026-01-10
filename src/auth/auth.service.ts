@@ -109,12 +109,24 @@ export class AuthService {
         throw new BadRequestException("Previous token is not expired");
       }
 
-      return await auth.api.sendVerificationEmail({
+      const res = await auth.api.sendVerificationEmail({
         body: {
           email: data.email,
           callbackURL: "/"
         }
       });
+
+      if(!res.status) {
+        throw new HttpException("Failed to send email", 500);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async logout() {
+    try {
+      await auth.api.signOut()
     } catch (error) {
       throw error;
     }
