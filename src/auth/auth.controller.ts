@@ -12,8 +12,8 @@ import {
   HttpException,
   InternalServerErrorException
 } from "@nestjs/common";
-import { AuthService } from "./auth.service";
-import { Response } from "express";
+import { AuthServiceLocal } from "./auth.service";
+import { Response, Request } from "express";
 import { AllowAnonymous } from "@thallesp/nestjs-better-auth";
 import { CreateUserDto, createUserSchema } from "./dto/create.signUpEmail.dto";
 import { loginSchema, loginSchemaDto } from "./dto/create.login.dto";
@@ -24,7 +24,7 @@ import { resendVerifyEmailSchema, resendVerifyEmailSchemaDto } from "./dto/creat
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
-    private authService: AuthService
+    private authService: AuthServiceLocal
   ) {}
 
   @Post('signup')
@@ -134,14 +134,37 @@ export class AuthController {
     }
   }
 
-  @Get('logout')
+  @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout() {
+  async logout(
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
     try {
-      return await this.authService.logout();
+      const sessionToken: string = req.cookies['better-auth.session_token'];
+
+      if (!sessionToken) {
+        return res.status(HttpStatus.BAD_REQUEST).json({
+          message: 'No session token provided',
+        });
+      }
+
+      await this.authService.logout(sessionToken, req);
+
+      // Clear cookies on response
+      res.clearCookie('better-auth.session_token');
+
+      res.json({
+        success: true,
+        message: "Logged out successfully",
+        data: null,
+        error: null
+      });
     } catch (error) {
-      
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Logout failed");
     }
   }
-
 }

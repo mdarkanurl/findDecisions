@@ -2,22 +2,28 @@ import {
   BadRequestException,
   ConflictException,
   HttpException,
-  Injectable
+  Injectable,
+  InternalServerErrorException
 } from "@nestjs/common";
-import { auth } from "../lib/auth";
+import { Request } from "express";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
 import { resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { redis } from "../redis";
+import { fromNodeHeaders } from "better-auth/node";
+import { AuthService } from "@thallesp/nestjs-better-auth";
 
 @Injectable()
-export class AuthService {
-  constructor(private prisma: PrismaService) {}
+export class AuthServiceLocal {
+  constructor(
+    private prisma: PrismaService,
+    private readonly auth: AuthService
+  ) {}
   async signUp(body: CreateUserDto) {
     try {
-      const user = await auth.api.signUpEmail({
+      const user = await this.auth.api.signUpEmail({
         body,
         asResponse: true,
       });
@@ -41,7 +47,7 @@ export class AuthService {
     req: Request
   ) {
     try {
-      const result = await auth.api.verifyEmail({
+      const result = await this.auth.api.verifyEmail({
         query: token,
         asResponse: true,
         headers: req.headers as any
@@ -65,7 +71,7 @@ export class AuthService {
     req: Request
   ) {
     try {
-      const res = await auth.api.signInEmail({
+      const res = await this.auth.api.signInEmail({
         body,
         asResponse: true,
         headers: req.headers as any
@@ -109,7 +115,7 @@ export class AuthService {
         throw new BadRequestException("Previous token is not expired");
       }
 
-      const res = await auth.api.sendVerificationEmail({
+      const res = await this.auth.api.sendVerificationEmail({
         body: {
           email: data.email,
           callbackURL: "/"
@@ -124,9 +130,23 @@ export class AuthService {
     }
   }
 
-  async logout() {
+  async logout(
+    sessionToken: string,
+    req: Request
+  ) {
     try {
-      await auth.api.signOut()
+      const res = await this.auth.api.revokeSession({
+        body: {
+          token: sessionToken
+        },
+        headers: req.headers as any,
+      });
+
+      if(!res) {
+        throw new InternalServerErrorException("Fali to revoke session");
+      }
+
+      return res;
     } catch (error) {
       throw error;
     }
