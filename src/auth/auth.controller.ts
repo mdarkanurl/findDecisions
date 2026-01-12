@@ -20,6 +20,7 @@ import { loginSchema, loginSchemaDto } from "./dto/create.login.dto";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { verifyEmailDto, verifyEmailSchema } from "./dto/create.email-verification.dto";
 import { resendVerifyEmailSchema, resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
+import { requestPasswordResetSchema, requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -165,6 +166,31 @@ export class AuthController {
         throw error;
       }
       throw new InternalServerErrorException("Logout failed");
+    }
+  }
+
+  @Post('request-password-reset')
+  @AllowAnonymous()
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(requestPasswordResetSchema))
+  async requestPasswordReset(
+    @Body() body: requestPasswordResetSchemaDto,
+    @Res() res: Response
+  ) {
+    try {
+      await this.authService.requestPasswordReset(body);
+
+      res.json({
+        success: true,
+        message: "Check your email for the reset link",
+        data: null,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Request password reset failed");
     }
   }
 }

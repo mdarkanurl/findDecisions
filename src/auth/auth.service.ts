@@ -5,7 +5,7 @@ import {
   Injectable,
   InternalServerErrorException
 } from "@nestjs/common";
-import { Request } from "express";
+import e, { Request } from "express";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
@@ -14,6 +14,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { redis } from "../redis";
 import { fromNodeHeaders } from "better-auth/node";
 import { AuthService } from "@thallesp/nestjs-better-auth";
+import { requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
 
 @Injectable()
 export class AuthServiceLocal {
@@ -147,6 +148,31 @@ export class AuthServiceLocal {
       }
 
       return res;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async requestPasswordReset(
+    body: requestPasswordResetSchemaDto
+  ) {
+    try {
+      const user = await this.prisma.user.count({
+        where: {
+          email: body.email
+        }
+      });
+
+      if(user === 0 ) {
+        throw new BadRequestException(`User not found`);
+      }
+      const data = await this.auth.api.requestPasswordReset({
+          body: {
+            email: body.email,
+          }
+      });
+
+      return data;
     } catch (error) {
       throw error;
     }
