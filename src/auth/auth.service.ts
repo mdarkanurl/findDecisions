@@ -16,6 +16,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import { AuthService } from "@thallesp/nestjs-better-auth";
 import { requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
 import { resetPasswordSchemaSchemaDto } from "./dto/create.reset.password.dto";
+import { changePasswordSchemaDto } from "./dto/create.change.password.dto";
 
 @Injectable()
 export class AuthServiceLocal {
@@ -199,6 +200,31 @@ export class AuthServiceLocal {
       ) {
         throw new BadRequestException("Reset token is invalid or expired");
       }
+      throw error;
+    }
+  }
+
+  async changePassword(
+    headers: any,
+    body: changePasswordSchemaDto
+  ) {
+    try {
+      const data = await this.auth.api.changePassword({
+          body: {
+              newPassword: body.newPassword,
+              currentPassword: body.currentPassword,
+              revokeOtherSessions: true,
+          },
+          headers: headers,
+          asResponse: true,
+      });
+
+      if(data.status === 400) {
+        throw new BadRequestException("invalid password");
+      }
+
+      return data;
+    } catch (error) {
       throw error;
     }
   }

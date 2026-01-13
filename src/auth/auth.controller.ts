@@ -12,7 +12,8 @@ import {
   HttpException,
   InternalServerErrorException,
   Param,
-  BadRequestException
+  BadRequestException,
+  Headers
 } from "@nestjs/common";
 import { AuthServiceLocal } from "./auth.service";
 import { Response, Request } from "express";
@@ -24,6 +25,7 @@ import { verifyEmailDto, verifyEmailSchema } from "./dto/create.email-verificati
 import { resendVerifyEmailSchema, resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 import { requestPasswordResetSchema, requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
 import { resetPasswordSchema } from "./dto/create.reset.password.dto";
+import { changePasswordSchema, changePasswordSchemaDto } from "./dto/create.change.password.dto";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -228,6 +230,34 @@ export class AuthController {
         throw error;
       }
       throw new InternalServerErrorException("Password reset failed");
+    }
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UsePipes(new ZodValidationPipe(changePasswordSchema))
+  async changePassword(
+    @Body() body: changePasswordSchemaDto,
+    @Headers() headers: any,
+    @Res() res: Response
+  ) {
+    try {
+      await this.authService.changePassword(
+        headers,
+        body
+      );
+
+      res.json({
+        success: true,
+        message: "The password has been changed",
+        data: null,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Failed to change the password");
     }
   }
 }
