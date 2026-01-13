@@ -33,7 +33,7 @@ export class AuthController {
     private authService: AuthServiceLocal
   ) {}
 
-  @Post('signup')
+  @Post('/sign-up/email')
   @AllowAnonymous()
   @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ZodValidationPipe(createUserSchema))
@@ -85,7 +85,7 @@ export class AuthController {
     }
   }
 
-  @Post('login')
+  @Post('/sign-in/email')
   @AllowAnonymous()
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(loginSchema))
@@ -140,7 +140,7 @@ export class AuthController {
     }
   }
 
-  @Post('logout')
+  @Post('/sign-out')
   @HttpCode(HttpStatus.OK)
   async logout(
     @Req() req: Request,
@@ -258,6 +258,21 @@ export class AuthController {
         throw error;
       }
       throw new InternalServerErrorException("Failed to change the password");
+    }
+  }
+
+  @Get('/get-session')
+  @HttpCode(HttpStatus.OK)
+  async getSession(
+    @Headers() headers: any,
+  ) {
+    try {
+      return await this.authService.getSession(headers);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Failed to get session");
     }
   }
 }

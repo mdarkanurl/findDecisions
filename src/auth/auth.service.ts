@@ -3,7 +3,8 @@ import {
   ConflictException,
   HttpException,
   Injectable,
-  InternalServerErrorException
+  InternalServerErrorException,
+  NotFoundException
 } from "@nestjs/common";
 import e, { Request } from "express";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
@@ -224,6 +225,31 @@ export class AuthServiceLocal {
       }
 
       return data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getSession(
+    headers: any,
+  ) {
+    try {
+      const user = await this.auth.api.getSession({ headers });
+
+      if(!user) {
+        throw new NotFoundException("No session data found");
+      }
+
+      return {
+        user: {
+          name: user.user.name,
+          email: user.user.email,
+          emailVerified: user.user.emailVerified
+        },
+        session: {
+          expiresAt: user.session.expiresAt
+        }
+      }
     } catch (error) {
       throw error;
     }
