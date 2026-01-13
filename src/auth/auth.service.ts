@@ -15,6 +15,7 @@ import { redis } from "../redis";
 import { fromNodeHeaders } from "better-auth/node";
 import { AuthService } from "@thallesp/nestjs-better-auth";
 import { requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
+import { resetPasswordSchemaSchemaDto } from "./dto/create.reset.password.dto";
 
 @Injectable()
 export class AuthServiceLocal {
@@ -166,6 +167,7 @@ export class AuthServiceLocal {
       if(user === 0 ) {
         throw new BadRequestException(`User not found`);
       }
+
       const data = await this.auth.api.requestPasswordReset({
           body: {
             email: body.email,
@@ -174,6 +176,29 @@ export class AuthServiceLocal {
 
       return data;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  async resetPassword(
+    body: resetPasswordSchemaSchemaDto
+  ) {
+    try {
+      const data = await this.auth.api.resetPassword({
+          body: {
+            newPassword: body.password,
+            token: body.token
+          },
+      });
+
+      return data;
+    } catch (error: any) {
+      if (
+        error?.statusCode === 400 &&
+        error?.body?.code === "INVALID_TOKEN"
+      ) {
+        throw new BadRequestException("Reset token is invalid or expired");
+      }
       throw error;
     }
   }

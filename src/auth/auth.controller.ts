@@ -10,7 +10,9 @@ import {
   Query,
   UsePipes,
   HttpException,
-  InternalServerErrorException
+  InternalServerErrorException,
+  Param,
+  BadRequestException
 } from "@nestjs/common";
 import { AuthServiceLocal } from "./auth.service";
 import { Response, Request } from "express";
@@ -21,6 +23,7 @@ import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { verifyEmailDto, verifyEmailSchema } from "./dto/create.email-verification.dto";
 import { resendVerifyEmailSchema, resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 import { requestPasswordResetSchema, requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
+import { resetPasswordSchema } from "./dto/create.reset.password.dto";
 
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
@@ -191,6 +194,40 @@ export class AuthController {
         throw error;
       }
       throw new InternalServerErrorException("Request password reset failed");
+    }
+  }
+
+  @Post('reset-password/:token')
+  @AllowAnonymous()
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Param('token') token: string,
+    @Body('password') password: string,
+    @Res() res: Response
+  ) {
+    try {
+      const result = resetPasswordSchema.safeParse({ token, password });
+
+      if (!result.success) {
+        throw new BadRequestException(result.error.issues);
+      }
+
+      await this.authService.resetPassword({
+        token: result.data.token,
+        password: result.data.password
+      });
+
+      res.json({
+        success: true,
+        message: "The password has been changed",
+        data: null,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Password reset failed");
     }
   }
 }
