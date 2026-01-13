@@ -18,10 +18,14 @@ export const auth = betterAuth({
     enabled: true,
     requireEmailVerification: true,
     sendResetPassword: async ({user, url, token}, request) => {
+      const fixedUrl = url.replace(
+        "/api/auth/reset-password",
+        `/api/${API_VERSION_FOR_EMAIL_VERIFICATION}/auth/reset-password`
+      );
       await sendEmailQueue({
         email: user.email,
         subject: "Reset your password",
-        body: `Click the link to reset your password: ${url}`,
+        body: `Click the link to reset your password: ${fixedUrl}`,
       });
     },
     resetPasswordTokenExpiresIn: 300,
