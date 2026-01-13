@@ -6,14 +6,13 @@ import {
   InternalServerErrorException,
   NotFoundException
 } from "@nestjs/common";
-import e, { Request } from "express";
+import { Request } from "express";
 import { CreateUserDto } from "./dto/create.signUpEmail.dto";
 import { loginSchemaDto } from "./dto/create.login.dto";
 import { verifyEmailDto } from "./dto/create.email-verification.dto";
 import { resendVerifyEmailSchemaDto } from "./dto/create.resend-email-verification.dto";
 import { PrismaService } from "../prisma/prisma.service";
 import { redis } from "../redis";
-import { fromNodeHeaders } from "better-auth/node";
 import { AuthService } from "@thallesp/nestjs-better-auth";
 import { requestPasswordResetSchemaDto } from "./dto/create.request.password.reset.dto";
 import { resetPasswordSchemaSchemaDto } from "./dto/create.reset.password.dto";
@@ -168,6 +167,11 @@ export class AuthServiceLocal {
 
       if(user === 0 ) {
         throw new BadRequestException(`User not found`);
+      }
+
+      const dataFromRedis = await redis.get(`sendResetPasswordEmail:${body.email}`);
+      if(dataFromRedis) {
+        throw new BadRequestException("Previous token is not expired");
       }
 
       const data = await this.auth.api.requestPasswordReset({

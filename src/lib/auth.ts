@@ -6,7 +6,7 @@ import { sendEmailQueue } from '../utils/rabbitmq';
 import { redis } from '../redis';
 
 const Prisma = new PrismaService();
-const API_VERSION_FOR_EMAIL_VERIFICATION = process.env.API_VERSION_FOR_EMAIL_VERIFICATION;
+const API_VERSION = process.env.API_VERSION_;
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL!,
@@ -20,13 +20,19 @@ export const auth = betterAuth({
     sendResetPassword: async ({user, url, token}, request) => {
       const fixedUrl = url.replace(
         "/api/auth/reset-password",
-        `/api/${API_VERSION_FOR_EMAIL_VERIFICATION}/auth/reset-password`
+        `/api/${API_VERSION}/auth/reset-password`
       );
       await sendEmailQueue({
         email: user.email,
         subject: "Reset your password",
         body: `Click the link to reset your password: ${fixedUrl}`,
       });
+
+      await redis.set(
+        `sendResetPasswordEmail:${user.email}`,
+        new Date().toISOString().toString(),
+        "EX", 300
+      );
     },
     resetPasswordTokenExpiresIn: 300,
     revokeSessionsOnPasswordReset: true,
@@ -38,7 +44,7 @@ export const auth = betterAuth({
     async sendVerificationEmail({ user, url }) {
       const fixedUrl = url.replace(
         "/api/auth/verify-email",
-        `/api/${API_VERSION_FOR_EMAIL_VERIFICATION}/auth/verify-email`
+        `/api/${API_VERSION}/auth/verify-email`
       );
       await sendEmailQueue({
         email: user.email,
@@ -55,6 +61,26 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendOnSignUp: true,
     expiresIn: 300
+  },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": {
+        window: 10,
+        max: 3
+      },
+      "/sign-up/email": {
+        window: 10,
+        max: 3
+      }
+    }
+  },
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for", "cf-connecting-ip"]
+    }
   },
   trustedOrigins: ['http://localhost:3000'],
 });
