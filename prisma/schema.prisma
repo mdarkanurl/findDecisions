@@ -13,23 +13,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  user
-  admin
-  system
-}
-
-model decisions {
-  id        String   @id @default(uuid())
-  actorType Role
-  actorId   String?
-  action    String
-  reason    String
-  context   Json?
-  outcome   String
-  createdAt DateTime @default(now())
-}
-
 model User {
   id            String    @id
   name          String
