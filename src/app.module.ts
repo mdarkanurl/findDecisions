@@ -3,6 +3,7 @@ import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { DecisionsModule } from './decisions/decisions.module';
+import { ProjectsModule } from './projects/projects.module';
 import { auth } from "./lib/auth";
 import { LocalAuthModule } from "./auth/auth.module";
 import config from './config';
@@ -16,6 +17,7 @@ import config from './config';
     }),
     PrismaModule,
     DecisionsModule,
+    ProjectsModule,
     LocalAuthModule,
     AuthModule.forRoot({ auth }),
   ],
