@@ -13,16 +13,30 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Status {
+  pending
+  active
+  removed
+}
+
+enum Role {
+  admin
+  member
+}
+
 model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
+  id                    String    @id
+  name                  String
+  email                 String
+  emailVerified         Boolean   @default(false)
+  image                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  sessions              Session[]
+  accounts              Account[]
+  createdProjects       Project[] @relation("CreatedProjects")
+  projectMember         ProjectMember[]
+  decisions             Decision[]
 
   @@unique([email])
   @@map("user")
@@ -74,4 +88,40 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model Project {
+  id                String   @id @default(uuid())
+  adminId           String
+  admin             User @relation("CreatedProjects", fields: [adminId], references: [id])
+  description       String?
+  members           ProjectMember[]
+  decisions         Decision[]
+}
+
+model ProjectMember {
+  id                String      @id @default(uuid())
+  projectId         String
+  project           Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId          String
+  member            User        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status            Status
+  joinedAt          DateTime
+  createdAt  DateTime @default(now())
+
+  @@unique([projectId, memberId])
+}
+
+model Decision {
+  id                String      @id @default(uuid())
+  projectId         String
+  project           Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actorType         Role        @default(member)
+  actorId           String
+  actor             User        @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  action            String
+  reason            String
+  context           Json?
+  outcome           String
+  createdAt         DateTime @default(now())
 }
