@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
 import { createProjectsSchemaDto } from './dto/create.projects.dto';
+import { UUID } from 'node:crypto';
 
 @Injectable()
 export class ProjectsService {
@@ -19,6 +20,24 @@ export class ProjectsService {
           description: body?.description
         }
       });
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getOneProject(id: UUID) {
+    try {
+      const res = await this.prisma.project.findUnique({
+        where: {
+          id: id
+        }
+      });
+
+      if(!res) {
+        throw new NotFoundException('Project not found');
+      }
+
+      return res;
     } catch (error) {
       throw error;
     }
