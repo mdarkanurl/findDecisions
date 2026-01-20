@@ -92,6 +92,7 @@ model Verification {
 
 model Project {
   id                String   @id @default(uuid())
+  name              String
   adminId           String
   admin             User @relation("CreatedProjects", fields: [adminId], references: [id])
   description       String?

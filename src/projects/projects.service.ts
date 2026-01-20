@@ -14,6 +14,7 @@ export class ProjectsService {
         null : typeof body.description;
       return await this.prisma.project.create({
         data: {
+          name: body.name,
           adminId: body.adminId,
           description: body?.description
         }
