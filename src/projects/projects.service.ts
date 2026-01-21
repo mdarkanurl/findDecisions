@@ -42,4 +42,34 @@ export class ProjectsService {
       throw error;
     }
   }
+
+  async getAllProject(
+    limit: number,
+    skip: number
+  ) {
+    try {
+      const total = await this.prisma.project.count();
+
+      if(total === 0) {
+        throw new NotFoundException('No projects found')
+      }
+
+      const data = await this.prisma.project.findMany({
+        skip,
+        take: limit
+      });
+
+      return {
+        data,
+        pagination: {
+          totalItems: total,
+          currentPage: Math.floor(skip / limit) + 1,
+          totalPages: Math.ceil(total / limit),
+          pageSize: limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 }

@@ -11,7 +11,7 @@ import {
   Post,
   Req,
   Res,
-  UsePipes
+  Query
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Request, Response } from 'express';
@@ -74,7 +74,35 @@ export class ProjectsController {
 
       res.json({
         success: true,
-        message: "The project has been created",
+        message: "This is the project that found",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to create a project");
+    }
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getAllProject(
+    @Query() query: any,
+    @Res() res: Response
+  ) {
+    try {
+      const page = parseInt(query.page) || 1;
+      const limit = parseInt(query.limit) || 10; 
+      const skip = (page - 1) * limit; // page 3 => (3 - 1) * 10 = 20 skip
+      
+      const response = await this.projectsService
+        .getAllProject(limit, skip);
+
+      res.json({
+        success: true,
+        message: "These are projects that found",
         data: response,
         error: null
       });
