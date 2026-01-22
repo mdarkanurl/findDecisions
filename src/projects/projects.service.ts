@@ -26,34 +26,24 @@ export class ProjectsService {
 
   async getOneProject(id: UUID, userId: string) {
     try {
-      const isPublic = await this.prisma.project.count({
+      const data = await this.prisma.project.findUnique({
         where: {
-          id,
-          isPublic: true
+          id
         }
       });
-
-      let data: any;
-      if(isPublic === 0) {
-        data = await this.prisma.project.findUnique({
-          where: {
-            id,
-            adminId: userId
-          }
-        });
-      } else {
-        data = await this.prisma.project.findUnique({
-          where: {
-            id
-          }
-        });
-      }
 
       if(!data) {
         throw new NotFoundException('Project not found');
       }
 
-      return data;
+      if(
+        data.isPublic ||
+        data.adminId === userId
+      ) {
+        return data;
+      }
+
+      throw new NotFoundException('Project not found');
     } catch (error) {
       throw error;
     }
@@ -64,7 +54,11 @@ export class ProjectsService {
     skip: number
   ) {
     try {
-      const total = await this.prisma.project.count();
+      const total = await this.prisma.project.count({
+        where: {
+          isPublic: true
+        }
+      });
 
       if(total === 0) {
         throw new NotFoundException('No projects found')
@@ -72,7 +66,48 @@ export class ProjectsService {
 
       const data = await this.prisma.project.findMany({
         skip,
-        take: limit
+        take: limit,
+        where: {
+          isPublic: true
+        }
+      });
+
+      return {
+        data,
+        pagination: {
+          totalItems: total,
+          currentPage: Math.floor(skip / limit) + 1,
+          totalPages: Math.ceil(total / limit),
+          pageSize: limit
+        }
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllUserProject(
+    skip: number,
+    limit: number,
+    userId: string
+  ) {
+    try {
+      const total = await this.prisma.project.count({
+        where: {
+          adminId: userId
+        }
+      });
+
+      if(total === 0) {
+        throw new NotFoundException('No projects found')
+      }
+
+      const data = await this.prisma.project.findMany({
+        skip,
+        take: limit,
+        where: {
+          adminId: userId,
+        }
       });
 
       return {

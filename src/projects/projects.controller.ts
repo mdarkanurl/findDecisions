@@ -74,7 +74,8 @@ export class ProjectsController {
   ) {
     try {
       const userId: string = req.session.user.id;
-      const response = await this.projectsService.getOneProject(id, userId);
+      const response = await this.projectsService
+        .getOneProject(id, userId);
 
       res.json({
         success: true,
@@ -86,7 +87,7 @@ export class ProjectsController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException("Falied to create a project");
+      throw new InternalServerErrorException("Falied to get a project");
     }
   }
 
@@ -114,7 +115,37 @@ export class ProjectsController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException("Falied to create a project");
+      throw new InternalServerErrorException("Falied to get all project");
+    }
+  }
+
+  @Get('mine')
+  @HttpCode(HttpStatus.OK)
+  async getAllUserProject(
+    @Query() query: any,
+    @Res() res: Response,
+    @Req() req: Request
+  ) {
+    try {
+      const page = parseInt(query.page) || 1;
+      const limit = parseInt(query.limit) || 10; 
+      const skip = (page - 1) * limit;
+      const userId: string = req.session.user.id;
+
+      const response = await this.projectsService
+        .getAllUserProject(skip, limit, userId);
+
+      res.json({
+        success: true,
+        message: "These are projects that found",
+        data: response,
+        error: null
+      });      
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to get all user's project");
     }
   }
 }
