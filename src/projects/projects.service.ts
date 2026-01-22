@@ -11,13 +11,12 @@ export class ProjectsService {
     body: createProjectsSchemaDto
   ) {
     try {
-      typeof body.description === undefined?
-        null : typeof body.description;
       return await this.prisma.project.create({
         data: {
           name: body.name,
           adminId: body.adminId,
-          description: body?.description
+          description: body?.description,
+          isPublic: body.isPublic
         }
       });
     } catch (error) {
@@ -25,19 +24,36 @@ export class ProjectsService {
     }
   }
 
-  async getOneProject(id: UUID) {
+  async getOneProject(id: UUID, userId: string) {
     try {
-      const res = await this.prisma.project.findUnique({
+      const isPublic = await this.prisma.project.count({
         where: {
-          id: id
+          id,
+          isPublic: true
         }
       });
 
-      if(!res) {
+      let data: any;
+      if(isPublic === 0) {
+        data = await this.prisma.project.findUnique({
+          where: {
+            id,
+            adminId: userId
+          }
+        });
+      } else {
+        data = await this.prisma.project.findUnique({
+          where: {
+            id
+          }
+        });
+      }
+
+      if(!data) {
         throw new NotFoundException('Project not found');
       }
 
-      return res;
+      return data;
     } catch (error) {
       throw error;
     }

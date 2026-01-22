@@ -36,7 +36,8 @@ export class ProjectsController {
       const { success, data, error } = createProjectsSchema.safeParse({
         name: body.name,
         adminId: userId,
-        description: body.description
+        description: body.description,
+        isPublic: body.isPublic
       });
       
       if (!success) {
@@ -46,7 +47,8 @@ export class ProjectsController {
       const response = await this.projectsService.create({
         name: data.name,
         adminId: data.adminId,
-        description: data.description
+        description: data.description,
+        isPublic: data.isPublic
       });
 
       res.json({
@@ -67,10 +69,12 @@ export class ProjectsController {
   @HttpCode(HttpStatus.OK)
   async getOneProject(
     @Param('id') id: UUID,
-    @Res() res: Response
+    @Res() res: Response,
+    @Req() req: Request
   ) {
     try {
-      const response = await this.projectsService.getOneProject(id);
+      const userId: string = req.session.user.id;
+      const response = await this.projectsService.getOneProject(id, userId);
 
       res.json({
         success: true,
