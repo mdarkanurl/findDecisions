@@ -94,8 +94,9 @@ model Project {
   id                String   @id @default(uuid())
   name              String
   adminId           String
-  admin             User @relation("CreatedProjects", fields: [adminId], references: [id])
+  admin             User     @relation("CreatedProjects", fields: [adminId], references: [id], onDelete: Cascade)
   description       String?
+  isPublic          Boolean  @default(false)
   members           ProjectMember[]
   decisions         Decision[]
 }

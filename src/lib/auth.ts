@@ -6,7 +6,7 @@ import { sendEmailQueue } from '../utils/rabbitmq';
 import { redis } from '../redis';
 
 const Prisma = new PrismaService();
-const API_VERSION = process.env.API_VERSION_;
+const API_VERSION = process.env.API_VERSION || "v1";
 
 export const auth = betterAuth({
   url: process.env.BETTER_AUTH_URL!,
