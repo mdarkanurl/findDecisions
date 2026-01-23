@@ -155,4 +155,32 @@ export class ProjectsService {
       throw error;
     }
   }
+
+  async delete(
+    userId: string,
+    id: UUID
+  ) {
+    try {
+      const projects = await this.prisma.project.count({
+        where: {
+          id,
+          adminId: userId
+        }
+      });
+
+      if(!projects) {
+        throw new NotFoundException('No projects found');
+      }
+
+      return await this.prisma.project.delete({
+        where: {
+          id,
+          adminId: userId
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
 }

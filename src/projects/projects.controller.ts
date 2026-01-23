@@ -13,6 +13,7 @@ import {
   Res,
   Query,
   Put,
+  Delete,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Request, Response } from 'express';
@@ -151,7 +152,7 @@ export class ProjectsController {
     }
   }
 
-  @Put('/update/:id')
+  @Put(':id')
   @HttpCode(HttpStatus.OK)
   async update(
     @Body(
@@ -178,6 +179,32 @@ export class ProjectsController {
         throw error;
       }
       throw new InternalServerErrorException("Falied to update the project");
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
+  async delete(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('id') id: UUID
+  ) {
+    try {
+      const userId: string = req.session.user.id;
+      const response = await this.projectsService
+        .delete(userId, id);
+
+      res.json({
+        success: true,
+        message: "The project has deleted",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to delete the project");
     }
   }
 }
