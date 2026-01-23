@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
 import { createProjectsSchemaDto } from './dto/create.projects.dto';
 import { UUID } from 'node:crypto';
+import { UpdateProjectsSchemaDto } from './dto/create.update.projects.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -119,6 +120,37 @@ export class ProjectsService {
           pageSize: limit
         }
       };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async update(
+    userId: string,
+    id: UUID,
+    body: UpdateProjectsSchemaDto
+  ) {
+    try {
+      const projects = await this.prisma.project.count({
+        where: {
+          id,
+          adminId: userId
+        }
+      });
+
+      if(!projects) {
+        throw new NotFoundException('No projects found');
+      }
+
+      return await this.prisma.project.update({
+        where: {
+          adminId: userId,
+          id
+        },
+        data: {
+          ...body
+        }
+      });
     } catch (error) {
       throw error;
     }

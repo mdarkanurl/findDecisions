@@ -11,13 +11,15 @@ import {
   Post,
   Req,
   Res,
-  Query
+  Query,
+  Put,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Request, Response } from 'express';
 import { createProjectsSchema } from './dto/create.projects.dto';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import { UUID } from 'node:crypto';
+import { updateProjectsSchema, UpdateProjectsSchemaDto } from './dto/create.update.projects.dto';
 
 @Controller({ path: 'projects', version: '1' })
 export class ProjectsController {
@@ -146,6 +148,36 @@ export class ProjectsController {
         throw error;
       }
       throw new InternalServerErrorException("Falied to get all user's project");
+    }
+  }
+
+  @Put('/update/:id')
+  @HttpCode(HttpStatus.OK)
+  async update(
+    @Body(
+      new ZodValidationPipe(updateProjectsSchema)
+    ) body: UpdateProjectsSchemaDto,
+    @Param('id') id: UUID,
+    @Res() res: Response,
+    @Req() req: Request,
+  ) {
+    try {
+      const userId: string = req.session.user.id;
+
+      const response = await this.projectsService
+        .update(userId, id, body);
+
+      res.json({
+        success: true,
+        message: "The project has updated",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to update the project");
     }
   }
 }
