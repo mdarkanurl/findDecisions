@@ -19,6 +19,14 @@ enum Status {
   removed
 }
 
+enum inviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED 
+  REVOKED
+}
+
 enum Role {
   admin
   member
@@ -126,4 +134,14 @@ model Decision {
   context           Json?
   outcome           String
   createdAt         DateTime @default(now())
+}
+
+model ProjectInvite {
+  id                String        @id @default(uuid())
+  projectId         String
+  invitedBy         String
+  status            inviteStatus  @default(PENDING)
+  createdAt         DateTime      @default(now())
+  expiresAt         DateTime
+  respondedAt       DateTime
 }
