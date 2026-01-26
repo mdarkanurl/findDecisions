@@ -7,7 +7,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { auth } from "./lib/auth";
 import { LocalAuthModule } from "./auth/auth.module";
 import config from './config';
-import { membersModule } from './members/members.module';
+import { invitesModule } from './invites/invites.module';
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { membersModule } from './members/members.module';
     PrismaModule,
     DecisionsModule,
     ProjectsModule,
-    membersModule,
+    invitesModule,
     LocalAuthModule,
     AuthModule.forRoot({ auth }),
   ],
