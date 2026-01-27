@@ -52,4 +52,29 @@ export class invitesController {
       throw new InternalServerErrorException("Falied to create the invite");
     }
   }
+
+  @Get(':projectId')
+  async getAllInvites(
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    try {
+      const userId: UUID = req.session.user.id;
+
+      const response = await this.invitesService
+        .getAllInvites(userId);
+
+      res.json({
+        success: true,
+        message: "These are invite that found",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to get all invite");
+    }
+  }
 }
