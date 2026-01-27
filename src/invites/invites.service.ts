@@ -58,4 +58,24 @@ export class invitesService {
       throw error;
     }
   }
+
+  async getAllInvitesWhereYouInvited(
+    userId: UUID
+  ) {
+    try {
+      const data = await this.prisma.projectInvite.findMany({
+        where: {
+          target: userId
+        }
+      });
+
+      if(!data.length) {
+        throw new NotFoundException();
+      }
+
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
