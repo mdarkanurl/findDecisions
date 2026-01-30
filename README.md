@@ -1,0 +1,2 @@
+Decision Log API is a backend service built with NestJS that records why important actions happened in a system. Instead of only tracking actions, it stores structured, immutable decision records including who made the decision (user, admin, or system), the reason behind it, supporting context, and the final outcome.
+The service is designed for auditability, debugging, and transparency in real-world applications such as moderation, automated rules, and business workflows.
