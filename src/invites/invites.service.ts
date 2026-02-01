@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createInviteSchemaDto } from './dto/create.invite.dto';
 import { UUID } from 'crypto';
@@ -76,6 +76,44 @@ export class invitesService {
       return data;
     } catch (error) {
       throw error;
+    }
+  }
+
+  async acceptInvite(
+    userId: UUID,
+    inviteId: UUID
+  ) {
+    try {
+      // Find the invite
+      const invites = await this.prisma.projectInvite.findUnique({
+        where: {
+          id: inviteId,
+          target: userId,
+          status: 'PENDING', 
+        }
+      });
+
+      if(!invites) {
+        throw new NotFoundException();
+      }
+
+      if(invites.expiresAt <= new Date()) {
+        throw new BadRequestException('Invite expired');
+      }
+      
+      return await this.prisma.projectInvite.update({
+        where: {
+          id: inviteId,
+          target: userId,
+          status: 'PENDING'
+        },
+        data: {
+          status: 'ACCEPTED',
+          respondedAt: new Date()
+        }
+      });
+    } catch (error) {
+      throw error; 
     }
   }
 }

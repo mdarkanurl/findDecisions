@@ -54,6 +54,7 @@ export class invitesController {
   }
 
   @Get(':projectId')
+  @HttpCode(HttpStatus.OK)
   async getAllInvites(
     @Req() req: Request,
     @Res() res: Response
@@ -79,6 +80,7 @@ export class invitesController {
   }
 
   @Get('me')
+  @HttpCode(HttpStatus.OK)
   async getAllInvitesWhereYouInvited(
     @Req() req: Request,
     @Res() res: Response
@@ -92,6 +94,32 @@ export class invitesController {
       res.json({
         success: true,
         message: "These are invite that found",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to get all invite");
+    }
+  }
+
+  @Post('/:inviteId/accept')
+  @HttpCode(HttpStatus.OK)
+  async acceptInvite(
+    @Param('inviteId') inviteId: UUID,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    try {
+      const userId: UUID = req.session.user.id;
+      const response = this.invitesService
+        .acceptInvite(userId, inviteId);
+
+      res.json({
+        success: true,
+        message: "The invitation has been accepted",
         data: response,
         error: null
       });
