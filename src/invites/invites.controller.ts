@@ -83,13 +83,21 @@ export class invitesController {
   @HttpCode(HttpStatus.OK)
   async getAllInvitesWhereYouInvited(
     @Req() req: Request,
-    @Res() res: Response
+    @Res() res: Response,
+    @Query() query: any
   ) {
     try {
+      const page = parseInt(query.page) || 1;
+      const limit = parseInt(query.limit) || 10; 
+      const skip = (page - 1) * limit;
       const userId: UUID = req.session.user.id;
 
       const response = await this.invitesService
-        .getAllInvitesWhereYouInvited(userId);
+        .getAllInvitesWhereYouInvited(
+          userId,
+          limit,
+          skip
+        );
 
       res.json({
         success: true,

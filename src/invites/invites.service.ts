@@ -60,20 +60,38 @@ export class invitesService {
   }
 
   async getAllInvitesWhereYouInvited(
-    userId: UUID
+    userId: UUID,
+    limit: number,
+    skip: number
   ) {
     try {
-      const data = await this.prisma.projectInvite.findMany({
+      const total = await this.prisma.projectInvite.count({
         where: {
           target: userId
         }
       });
 
-      if(!data.length) {
+      if(!total) {
         throw new NotFoundException();
       }
 
-      return data;
+      const data = await this.prisma.projectInvite.findMany({
+        skip,
+        take: limit,
+        where: {
+          target: userId
+        }
+      });
+
+      return {
+        data,
+        pagination: {
+          totalItems: total,
+          currentPage: Math.floor(skip / limit) + 1,
+          totalPages: Math.ceil(total / limit),
+          pageSize: limit
+        }
+      };
     } catch (error) {
       throw error;
     }
