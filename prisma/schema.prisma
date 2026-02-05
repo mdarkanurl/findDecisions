@@ -23,7 +23,6 @@ enum inviteStatus {
   PENDING
   ACCEPTED
   REJECTED
-  EXPIRED 
   REVOKED
 }
 
