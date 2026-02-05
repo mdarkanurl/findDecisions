@@ -183,4 +183,45 @@ export class invitesService {
       throw error; 
     }
   }
+
+  async revokeInvite(
+    userId: UUID,
+    inviteId: UUID
+  ) {
+    try {
+      const invite = await this.prisma.projectInvite.findUnique({
+        where: {
+          id: inviteId
+        },
+        select: {
+          status: true,
+          invitedBy: true
+        }
+      });
+
+      if(!invite) {
+        throw new NotFoundException();
+      }
+
+      if(invite.invitedBy !== userId) {
+        throw new ForbiddenException('Invite does not belong to this user');
+      }
+
+      if(invite.status !== 'PENDING') {
+        throw new BadRequestException('Invite is not pending');
+      }
+
+      return await this.prisma.projectInvite.update({
+        where: {
+          id: inviteId
+        },
+        data: {
+          status: 'REVOKED',
+          respondedAt: new Date()
+        }
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }

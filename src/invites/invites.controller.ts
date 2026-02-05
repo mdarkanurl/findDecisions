@@ -164,4 +164,30 @@ export class invitesController {
       throw new InternalServerErrorException("Falied to reject the invite");
     }
   }
+
+  @Delete(':inviteId')
+  @HttpCode(HttpStatus.OK)
+  async revokeInvite(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('inviteId') inviteId: UUID
+  ) {
+    try {
+      const userId: UUID = req.session.user.id;
+      const response = this.invitesService
+        .revokeInvite(userId, inviteId);
+
+      res.json({
+        success: true,
+        message: "The invitation has been revoked",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to revoke the invite");
+    }
+  }
 }
