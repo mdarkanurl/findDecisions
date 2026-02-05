@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { createInviteSchemaDto } from './dto/create.invite.dto';
 import { UUID } from 'crypto';
@@ -103,32 +103,81 @@ export class invitesService {
   ) {
     try {
       // Find the invite
-      const invites = await this.prisma.projectInvite.findUnique({
-        where: {
-          id: inviteId,
-          target: userId,
-          status: 'PENDING', 
-        }
+      const invite = await this.prisma.projectInvite.findUnique({
+        where: { id: inviteId },
+        select: {
+          id: true,
+          target: true,
+          status: true,
+          expiresAt: true,
+        },
       });
 
-      if(!invites) {
+      if (!invite) {
         throw new NotFoundException();
       }
 
-      if(invites.expiresAt <= new Date()) {
+      if (invite.target !== userId) {
+        throw new ForbiddenException('Invite does not belong to this user');
+      }
+
+      if (invite.status !== 'PENDING') {
+        throw new BadRequestException('Invite is not pending');
+      }
+
+      if (invite.expiresAt <= new Date()) {
         throw new BadRequestException('Invite expired');
       }
       
       return await this.prisma.projectInvite.update({
-        where: {
-          id: inviteId,
-          target: userId,
-          status: 'PENDING'
-        },
+        where: { id: inviteId },
         data: {
           status: 'ACCEPTED',
-          respondedAt: new Date()
-        }
+          respondedAt: new Date(),
+        },
+      });
+    } catch (error) {
+      throw error; 
+    }
+  }
+
+  async rejectInvite(
+    userId: UUID,
+    inviteId: UUID
+  ) {
+    try {
+      const invite = await this.prisma.projectInvite.findUnique({
+        where: { id: inviteId },
+        select: {
+          id: true,
+          target: true,
+          status: true,
+          expiresAt: true,
+        },
+      });
+
+      if (!invite) {
+        throw new NotFoundException();
+      }
+
+      if (invite.target !== userId) {
+        throw new ForbiddenException('Invite does not belong to this user');
+      }
+
+      if (invite.status !== 'PENDING') {
+        throw new BadRequestException('Invite is not pending');
+      }
+
+      if (invite.expiresAt <= new Date()) {
+        throw new BadRequestException('Invite expired');
+      }
+      
+      return await this.prisma.projectInvite.update({
+        where: { id: inviteId },
+        data: {
+          status: 'ACCEPTED',
+          respondedAt: new Date(),
+        },
       });
     } catch (error) {
       throw error; 

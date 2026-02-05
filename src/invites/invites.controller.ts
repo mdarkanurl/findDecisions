@@ -135,7 +135,33 @@ export class invitesController {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException("Falied to get all invite");
+      throw new InternalServerErrorException("Falied to accept the invite");
+    }
+  }
+
+  @Post('/:inviteId/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectInvite(
+    @Param('inviteId') inviteId: UUID,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    try {
+      const userId: UUID = req.session.user.id;
+      const response = this.invitesService
+        .rejectInvite(userId, inviteId);
+
+      res.json({
+        success: true,
+        message: "The invitation has been rejected",
+        data: response,
+        error: null
+      });
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException("Falied to reject the invite");
     }
   }
 }
