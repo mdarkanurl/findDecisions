@@ -25,7 +25,7 @@ import { DecisionsService } from './decisions.service';
 
 @Controller({ path: 'decisions', version: '1' })
 export class DecisionsController {
-  constructor(private readonly decisionsService: DecisionsService) { }
+  constructor(private readonly decisionsService: DecisionsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -36,20 +36,25 @@ export class DecisionsController {
     @Res() res: Response
   ) {
     try {
-      const userId = (req as any).session.user.id;
+      const userId = req.session.user.id;
 
-      const result = await this.decisionsService.create(userId, body);
+      const result = await this.decisionsService
+        .create(userId, body);
 
-      return res.json({
+      res.json({
         success: true,
         message: 'Decision created successfully',
-        data: result
+        data: result,
+        error: null
       });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException((error as Error).message || "Failed to create decision");
+      throw new InternalServerErrorException(
+        (error as Error).message
+        || "Failed to create decision"
+      );
     }
   }
 
@@ -65,24 +70,29 @@ export class DecisionsController {
       const limit = parseInt(query.limit) || 10;
       const skip = (page - 1) * limit;
       const projectId = query.projectId;
-      const userId = (req as any).session.user.id;
+      const userId = req.session.user.id;
 
       if (!projectId) {
         throw new BadRequestException('Project ID is required');
       }
 
-      const result = await this.decisionsService.findAll(userId, projectId, limit, skip);
+      const result = await this.decisionsService
+        .findAll(userId, projectId, limit, skip);
 
-      return res.json({
+      res.json({
         success: true,
         message: 'Decisions found successfully',
-        data: result
+        data: result,
+        error: null
       });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException((error as Error).message || "Failed to fetch decisions");
+      throw new InternalServerErrorException(
+        (error as Error).message
+        || "Failed to fetch decisions"
+      );
     }
   }
 
@@ -94,19 +104,24 @@ export class DecisionsController {
     @Res() res: Response
   ) {
     try {
-      const userId = (req as any).session.user.id;
-      const result = await this.decisionsService.findOne(userId, id);
+      const userId = req.session.user.id;
+      const result = await this.decisionsService
+        .findOne(userId, id);
 
-      return res.json({
+      res.json({
         success: true,
         message: 'Decision found successfully',
-        data: result
+        data: result,
+        error: null
       });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException((error as Error).message || "Failed to fetch decision");
+      throw new InternalServerErrorException(
+        (error as Error).message
+        || "Failed to fetch decision"
+      );
     }
   }
 
@@ -120,19 +135,24 @@ export class DecisionsController {
     @Res() res: Response
   ) {
     try {
-      const userId = (req as any).session.user.id;
-      const result = await this.decisionsService.update(userId, id, body);
+      const userId = req.session.user.id;
+      const result = await this.decisionsService
+        .update(userId, id, body);
 
-      return res.json({
+      res.json({
         success: true,
         message: 'Decision updated successfully',
-        data: result
+        data: result,
+        error: null
       });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException((error as Error).message || "Failed to update decision");
+      throw new InternalServerErrorException(
+        (error as Error).message
+        || "Failed to update decision"
+      );
     }
   }
 
@@ -144,19 +164,24 @@ export class DecisionsController {
     @Res() res: Response
   ) {
     try {
-      const userId = (req as any).session.user.id;
-      const result = await this.decisionsService.delete(userId, id);
+      const userId = req.session.user.id;
+      const result = await this.decisionsService
+        .delete(userId, id);
 
-      return res.json({
+      res.json({
         success: true,
         message: 'Decision deleted successfully',
-        data: result
+        data: result,
+        error: null
       });
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      throw new InternalServerErrorException((error as Error).message || "Failed to delete decision");
+      throw new InternalServerErrorException(
+        (error as Error).message
+        || "Failed to delete decision"
+      );
     }
   }
 }
