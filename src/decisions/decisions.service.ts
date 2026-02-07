@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
+import { CreateDecisionSchemaDto } from './dto/create.decision.dto';
+import { UpdateDecisionSchemaDto } from './dto/update.decision.dto';
 
 @Injectable()
 export class DecisionsService {
   constructor(private prisma: PrismaService) { };
 
-  async create(userId: string, body: any) {
+  async create(
+    userId: string,
+    body: CreateDecisionSchemaDto
+  ) {
     try {
       const project = await this.prisma.project.findFirst({
         where: {
@@ -46,7 +51,12 @@ export class DecisionsService {
     }
   }
 
-  async findAll(userId: string, projectId: string, limit: number, skip: number) {
+  async findAll(
+    userId: string,
+    projectId: string,
+    limit: number,
+    skip: number
+  ) {
     try {
       const whereClause: any = {
         projectId,
@@ -89,7 +99,10 @@ export class DecisionsService {
     }
   }
 
-  async findOne(userId: string, id: string) {
+  async findOne(
+    userId: string,
+    id: string
+  ) {
     try {
       const decision = await this.prisma.decision.findFirst({
         where: {
@@ -120,7 +133,11 @@ export class DecisionsService {
     }
   }
 
-  async update(userId: string, id: string, body: any) {
+  async update(
+    userId: string,
+    id: string,
+    body: UpdateDecisionSchemaDto
+  ) {
     try {
       const decision = await this.prisma.decision.findUnique({
         where: { id },
@@ -151,7 +168,10 @@ export class DecisionsService {
     }
   }
 
-  async delete(userId: string, id: string) {
+  async delete(
+    userId: string,
+    id: string
+  ) {
     try {
       const decision = await this.prisma.decision.findUnique({
         where: { id },
