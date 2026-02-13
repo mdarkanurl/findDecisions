@@ -2,10 +2,33 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from './../prisma/prisma.service';
 import { CreateDecisionSchemaDto } from './dto/create.decision.dto';
 import { UpdateDecisionSchemaDto } from './dto/update.decision.dto';
+import { deleteCacheByPrefix, getCachedJson, setCachedJson } from '../utils/cache';
 
 @Injectable()
 export class DecisionsService {
   constructor(private prisma: PrismaService) { };
+
+  private getDecisionListCacheKey(
+    projectId: string,
+    userId: string,
+    limit: number,
+    skip: number,
+  ): string {
+    const page = Math.floor(skip / limit) + 1;
+    return `cache:decisions:list:project:${projectId}:user:${userId}:page:${page}:limit:${limit}`;
+  }
+
+  private getDecisionByIdCacheKey(id: string, userId: string): string {
+    return `cache:decisions:one:${id}:user:${userId}`;
+  }
+
+  private async invalidateDecisionCaches(projectId: string, decisionId?: string): Promise<void> {
+    await deleteCacheByPrefix(`cache:decisions:list:project:${projectId}:`);
+
+    if (decisionId) {
+      await deleteCacheByPrefix(`cache:decisions:one:${decisionId}:`);
+    }
+  }
 
   async create(
     userId: string,
@@ -35,7 +58,7 @@ export class DecisionsService {
 
       const isProjectAdmin = project.adminId === userId;
 
-      return await this.prisma.decision.create({
+      const result = await this.prisma.decision.create({
         data: {
           projectId: body.projectId,
           action: body.action,
@@ -46,6 +69,9 @@ export class DecisionsService {
           actorType: isProjectAdmin ? 'admin' : 'member'
         }
       });
+
+      await this.invalidateDecisionCaches(body.projectId);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -58,6 +84,21 @@ export class DecisionsService {
     skip: number
   ) {
     try {
+      const cacheKey = this.getDecisionListCacheKey(projectId, userId, limit, skip);
+      const cached = await getCachedJson<{
+        data: Array<Record<string, unknown>>;
+        pagination: {
+          totalItems: number;
+          currentPage: number;
+          totalPages: number;
+          pageSize: number;
+        };
+      }>(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
       const whereClause: any = {
         projectId,
         project: {
@@ -85,7 +126,7 @@ export class DecisionsService {
         })
       ]);
 
-      return {
+      const result = {
         data,
         pagination: {
           totalItems: total,
@@ -94,6 +135,9 @@ export class DecisionsService {
           pageSize: limit
         }
       };
+
+      await setCachedJson(cacheKey, result);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -104,6 +148,12 @@ export class DecisionsService {
     id: string
   ) {
     try {
+      const cacheKey = this.getDecisionByIdCacheKey(id, userId);
+      const cached = await getCachedJson<Record<string, unknown>>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const decision = await this.prisma.decision.findFirst({
         where: {
           id,
@@ -127,6 +177,7 @@ export class DecisionsService {
         throw new Error('Decision not found or access denied');
       }
 
+      await setCachedJson(cacheKey, decision);
       return decision;
     } catch (error) {
       throw error;
@@ -159,10 +210,13 @@ export class DecisionsService {
         throw new Error('You are not authorized to update this decision');
       }
 
-      return await this.prisma.decision.update({
+      const result = await this.prisma.decision.update({
         where: { id },
         data: { ...body }
       });
+
+      await this.invalidateDecisionCaches(decision.projectId, id);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -193,9 +247,12 @@ export class DecisionsService {
         throw new Error('You are not authorized to delete this decision');
       }
 
-      return await this.prisma.decision.delete({
+      const result = await this.prisma.decision.delete({
         where: { id }
       });
+
+      await this.invalidateDecisionCaches(decision.projectId, id);
+      return result;
     } catch (error) {
       throw error;
     }

@@ -3,16 +3,40 @@ import { PrismaService } from './../prisma/prisma.service';
 import { createProjectsSchemaDto } from './dto/create.projects.dto';
 import { UUID } from 'node:crypto';
 import { UpdateProjectsSchemaDto } from './dto/create.update.projects.dto';
+import { deleteCacheByPrefix, getCachedJson, setCachedJson } from '../utils/cache';
 
 @Injectable()
 export class ProjectsService {
   constructor (private prisma: PrismaService) {};
 
+  private getProjectByIdCacheKey(id: UUID, userId: string): string {
+    return `cache:projects:one:${id}:user:${userId}`;
+  }
+
+  private getPublicProjectsCacheKey(limit: number, skip: number): string {
+    const page = Math.floor(skip / limit) + 1;
+    return `cache:projects:public:page:${page}:limit:${limit}`;
+  }
+
+  private getUserProjectsCacheKey(limit: number, skip: number, userId: string): string {
+    const page = Math.floor(skip / limit) + 1;
+    return `cache:projects:user:${userId}:page:${page}:limit:${limit}`;
+  }
+
+  private async invalidateProjectCaches(userId: string, projectId?: UUID): Promise<void> {
+    if (projectId) {
+      await deleteCacheByPrefix(`cache:projects:one:${projectId}:`);
+    }
+
+    await deleteCacheByPrefix('cache:projects:public:');
+    await deleteCacheByPrefix(`cache:projects:user:${userId}:`);
+  }
+
   async create(
     body: createProjectsSchemaDto
   ) {
     try {
-      return await this.prisma.project.create({
+      const result = await this.prisma.project.create({
         data: {
           name: body.name,
           adminId: body.adminId,
@@ -20,6 +44,9 @@ export class ProjectsService {
           isPublic: body.isPublic
         }
       });
+
+      await this.invalidateProjectCaches(body.adminId);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -27,6 +54,12 @@ export class ProjectsService {
 
   async getOneProject(id: UUID, userId: string) {
     try {
+      const cacheKey = this.getProjectByIdCacheKey(id, userId);
+      const cached = await getCachedJson<Record<string, unknown>>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const data = await this.prisma.project.findUnique({
         where: {
           id
@@ -41,6 +74,7 @@ export class ProjectsService {
         data.isPublic ||
         data.adminId === userId
       ) {
+        await setCachedJson(cacheKey, data);
         return data;
       }
 
@@ -55,6 +89,21 @@ export class ProjectsService {
     skip: number
   ) {
     try {
+      const cacheKey = this.getPublicProjectsCacheKey(limit, skip);
+      const cached = await getCachedJson<{
+        data: Array<Record<string, unknown>>;
+        pagination: {
+          totalItems: number;
+          currentPage: number;
+          totalPages: number;
+          pageSize: number;
+        };
+      }>(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
       const total = await this.prisma.project.count({
         where: {
           isPublic: true
@@ -73,7 +122,7 @@ export class ProjectsService {
         }
       });
 
-      return {
+      const result = {
         data,
         pagination: {
           totalItems: total,
@@ -82,6 +131,9 @@ export class ProjectsService {
           pageSize: limit
         }
       };
+
+      await setCachedJson(cacheKey, result);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -93,6 +145,21 @@ export class ProjectsService {
     userId: string
   ) {
     try {
+      const cacheKey = this.getUserProjectsCacheKey(limit, skip, userId);
+      const cached = await getCachedJson<{
+        data: Array<Record<string, unknown>>;
+        pagination: {
+          totalItems: number;
+          currentPage: number;
+          totalPages: number;
+          pageSize: number;
+        };
+      }>(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
       const total = await this.prisma.project.count({
         where: {
           adminId: userId
@@ -111,7 +178,7 @@ export class ProjectsService {
         }
       });
 
-      return {
+      const result = {
         data,
         pagination: {
           totalItems: total,
@@ -120,6 +187,9 @@ export class ProjectsService {
           pageSize: limit
         }
       };
+
+      await setCachedJson(cacheKey, result);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -142,7 +212,7 @@ export class ProjectsService {
         throw new NotFoundException('No projects found');
       }
 
-      return await this.prisma.project.update({
+      const result = await this.prisma.project.update({
         where: {
           adminId: userId,
           id
@@ -151,6 +221,9 @@ export class ProjectsService {
           ...body
         }
       });
+
+      await this.invalidateProjectCaches(userId, id);
+      return result;
     } catch (error) {
       throw error;
     }
@@ -172,12 +245,15 @@ export class ProjectsService {
         throw new NotFoundException('No projects found');
       }
 
-      return await this.prisma.project.delete({
+      const result = await this.prisma.project.delete({
         where: {
           id,
           adminId: userId
         }
       });
+
+      await this.invalidateProjectCaches(userId, id);
+      return result;
     } catch (error) {
       console.log(error);
       throw error;
