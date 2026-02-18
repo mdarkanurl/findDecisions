@@ -36,7 +36,7 @@ export class ProjectsService {
     body: createProjectsSchemaDto
   ) {
     try {
-      const result = await this.prisma.project.create({
+      return await this.prisma.project.create({
         data: {
           name: body.name,
           adminId: body.adminId,
@@ -44,9 +44,6 @@ export class ProjectsService {
           isPublic: body.isPublic
         }
       });
-
-      await this.invalidateProjectCaches(body.adminId);
-      return result;
     } catch (error) {
       throw error;
     }
