@@ -124,21 +124,6 @@ export class ProjectsService {
     userId: string
   ) {
     try {
-      const cacheKey = this.getUserProjectsCacheKey(limit, skip, userId);
-      const cached = await getCachedJson<{
-        data: Array<Record<string, unknown>>;
-        pagination: {
-          totalItems: number;
-          currentPage: number;
-          totalPages: number;
-          pageSize: number;
-        };
-      }>(cacheKey);
-
-      if (cached) {
-        return cached;
-      }
-
       const total = await this.prisma.project.count({
         where: {
           adminId: userId
@@ -157,7 +142,7 @@ export class ProjectsService {
         }
       });
 
-      const result = {
+      return {
         data,
         pagination: {
           totalItems: total,
@@ -166,9 +151,6 @@ export class ProjectsService {
           pageSize: limit
         }
       };
-
-      await setCachedJson(cacheKey, result);
-      return result;
     } catch (error) {
       throw error;
     }
