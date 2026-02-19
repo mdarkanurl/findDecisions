@@ -58,7 +58,7 @@ export class DecisionsService {
 
       const isProjectAdmin = project.adminId === userId;
 
-      const result = await this.prisma.decision.create({
+      return await this.prisma.decision.create({
         data: {
           projectId: body.projectId,
           action: body.action,
@@ -69,9 +69,6 @@ export class DecisionsService {
           actorType: isProjectAdmin ? 'admin' : 'member'
         }
       });
-
-      await this.invalidateDecisionCaches(body.projectId);
-      return result;
     } catch (error) {
       throw error;
     }
