@@ -13,16 +13,6 @@ export class ProjectsService {
     return `cache:projects:one:${id}:user:${userId}`;
   }
 
-  private getPublicProjectsCacheKey(limit: number, skip: number): string {
-    const page = Math.floor(skip / limit) + 1;
-    return `cache:projects:public:page:${page}:limit:${limit}`;
-  }
-
-  private getUserProjectsCacheKey(limit: number, skip: number, userId: string): string {
-    const page = Math.floor(skip / limit) + 1;
-    return `cache:projects:user:${userId}:page:${page}:limit:${limit}`;
-  }
-
   private async invalidateProjectCaches(userId: string, projectId?: UUID): Promise<void> {
     if (projectId) {
       await deleteCacheByPrefix(`cache:projects:one:${projectId}:`);
