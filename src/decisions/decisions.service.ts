@@ -81,21 +81,6 @@ export class DecisionsService {
     skip: number
   ) {
     try {
-      const cacheKey = this.getDecisionListCacheKey(projectId, userId, limit, skip);
-      const cached = await getCachedJson<{
-        data: Array<Record<string, unknown>>;
-        pagination: {
-          totalItems: number;
-          currentPage: number;
-          totalPages: number;
-          pageSize: number;
-        };
-      }>(cacheKey);
-
-      if (cached) {
-        return cached;
-      }
-
       const whereClause: any = {
         projectId,
         project: {
@@ -123,7 +108,7 @@ export class DecisionsService {
         })
       ]);
 
-      const result = {
+      return {
         data,
         pagination: {
           totalItems: total,
@@ -132,9 +117,6 @@ export class DecisionsService {
           pageSize: limit
         }
       };
-
-      await setCachedJson(cacheKey, result);
-      return result;
     } catch (error) {
       throw error;
     }
