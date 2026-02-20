@@ -6,9 +6,10 @@ import { sendEmailDto } from './dto/send-email.dto';
 const queue = 'sendVerificationEmail';
 let conn: amqplib.ChannelModel;
 const logger = new Logger('RabbitMQ');
+const rabbitMqUrl = process.env.RABBITMQ_URL || 'amqp://localhost';
 
 const rabbitmq = async () => {
-  conn = await amqplib.connect('amqp://localhost');
+  conn = await amqplib.connect(rabbitMqUrl);
 
   const channel = await conn.createChannel();
   await channel.assertQueue(queue);
