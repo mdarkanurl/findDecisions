@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '../../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
@@ -6,11 +6,13 @@ import 'dotenv/config';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
+  private readonly logger = new Logger(PrismaService.name);
+
   constructor() {
     const url = process.env.DATABASE_URL;
-    
+
     if (!url) {
-      throw new Error("DATABASE_URL is not defined in environment variables");
+      throw new Error('DATABASE_URL is not defined in environment variables');
     }
     const pool = new Pool({ connectionString: url });
     const adapter = new PrismaPg(pool);
@@ -19,11 +21,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit() {
     await this.$connect();
-    console.log('Prisma connected to DB');
+    this.logger.log('Prisma connected to DB');
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    console.log('Prisma disconnected from DB');
+    this.logger.log('Prisma disconnected from DB');
   }
 }

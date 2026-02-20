@@ -1,9 +1,11 @@
 import amqplib from 'amqplib';
+import { Logger } from '@nestjs/common';
 import { sendEmail } from './send-email';
 import { sendEmailDto } from './dto/send-email.dto';
 
 const queue = 'sendVerificationEmail';
 let conn: amqplib.ChannelModel;
+const logger = new Logger('RabbitMQ');
 
 const rabbitmq = async () => {
   conn = await amqplib.connect('amqp://localhost');
@@ -23,7 +25,7 @@ const rabbitmq = async () => {
       });
       channel.ack(msg);
     } else {
-      console.log('Consumer cancelled by server');
+      logger.warn('Consumer cancelled by server');
     }
   });
 };

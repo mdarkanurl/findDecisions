@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
 import { createProjectsSchemaDto } from './dto/create.projects.dto';
 import { UUID } from 'node:crypto';
@@ -7,6 +7,8 @@ import { deleteCacheByPrefix, getCachedJson, setCachedJson } from '../utils/cach
 
 @Injectable()
 export class ProjectsService {
+  private readonly logger = new Logger(ProjectsService.name);
+
   constructor (private prisma: PrismaService) {};
 
   private getProjectByIdCacheKey(id: UUID, userId: string): string {
@@ -206,7 +208,11 @@ export class ProjectsService {
       await this.invalidateProjectCaches(userId, id);
       return result;
     } catch (error) {
-      console.log(error);
+      if (error instanceof Error) {
+        this.logger.error(`Failed to delete project ${id}`, error.stack);
+      } else {
+        this.logger.error(`Failed to delete project ${id}: ${String(error)}`);
+      }
       throw error;
     }
   }
