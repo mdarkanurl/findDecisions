@@ -218,3 +218,7 @@ If you want to contribute to Find Decisions, please follow the guidelines outlin
 ## License
 
 MIT License
+ 
+## contributor
+Arkan
+Muntaha
